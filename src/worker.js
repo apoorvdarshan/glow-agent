@@ -118,8 +118,13 @@ async function route(request, env, url) {
     return json({ taskId });
   }
 
-  match = pathname.match(/^\/api\/tryon\/([\w:-]{10,200})$/);
-  if (method === "GET" && match) return json(await pollTryOn(env, youcam, match[1]));
+  // Cached sample renders use "cached:<product>:<shade>" ids, which browsers send percent-encoded.
+  match = pathname.match(/^\/api\/tryon\/([\w%:-]{10,240})$/);
+  if (method === "GET" && match) {
+    const taskId = decodeURIComponent(match[1]);
+    if (!/^[\w:-]{10,200}$/.test(taskId)) throw new HttpError("Not found", 404);
+    return json(await pollTryOn(env, youcam, taskId));
+  }
 
   if (method === "POST" && pathname === "/api/routine") {
     const body = await readJson(request);
