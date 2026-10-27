@@ -61,7 +61,7 @@ tests/             vitest unit tests
 - The sample face's analysis and try-ons are cached in KV, so demos spend nothing.
 - Reports and bags from the browser are rebuilt from known fields before they reach the model or PayPal.
 - Repeated identical tool calls within a turn are not re-run.
-- The agent runs on Gemini's free tier, so it can't run up a bill. If the free quota runs out, the suggestion buttons fall back to the built-in routine builder and shade try-on.
+- The agent runs on Gemini's free tier, so it can't run up a bill. Google's free quota is the site-wide ceiling, and a per-visitor cap (30 messages a day) stops one visitor from using it all up. If the free quota runs out, the suggestion buttons fall back to the built-in routine builder and shade try-on.
 - Glow declines requests unrelated to skin care or the shop.
 
 ## Run it locally

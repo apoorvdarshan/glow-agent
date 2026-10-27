@@ -6,7 +6,9 @@ export const DEFAULT_LIMITS = {
   upload: { perIp: 10, global: 200 },
   analyze: { perIp: 3, global: 15 },
   tryon: { perIp: 15, global: 120 },
-  agent: { perIp: 30, global: 300 },
+  // No real site-wide cap: Gemini's free-tier quota is already the ceiling.
+  // The per-IP cap stops one visitor from using up that shared quota.
+  agent: { perIp: 30, global: 100_000 },
 };
 
 export class LimitError extends Error {
