@@ -335,8 +335,9 @@ async function localShadeMatch() {
   userSay("Match my foundation shade");
   const tint = state.products.get("skin-tint");
   const shades = tint.shades;
+  // Same three the agent suggests by default (see shadeCandidates).
   const mid = Math.floor(shades.length / 2);
-  const picks = shades.slice(mid - 2, mid + 1);
+  const picks = shades.slice(mid - 1, mid + 2);
   try {
     const renders = [];
     for (const shade of picks) {
