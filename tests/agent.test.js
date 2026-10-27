@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { runAgent, sanitizeCart, systemPrompt } from "../src/agent.js";
+import { runAgent, sanitizeCart, systemPrompt, checkShadeNames } from "../src/agent.js";
 import { normalizeReport } from "../src/report.js";
 import { SKIN_OUTPUT } from "./fixtures.js";
 
@@ -108,5 +108,24 @@ describe("systemPrompt", () => {
     expect(prompt).toContain("Dark circles (dark_circle_v2): 78/100");
     expect(prompt).toContain("skin-tint | Second-Skin Serum Tint | foundation | $32 | porcelain,");
     expect(prompt).toContain('"productId":"spf50"');
+  });
+});
+
+describe("checkShadeNames", () => {
+  const ui = [{ type: "tryon", product: { id: "skin-tint" }, renders: [{ shadeName: "Medium" }, { shadeName: "Medium Tan" }, { shadeName: "Tan" }] }];
+
+  it("replaces a reply that names shades that weren't rendered", () => {
+    expect(checkShadeNames("I loaded the porcelain, ivory, and light shades for you.", ui)).toBe(
+      "Here are Medium, Medium Tan and Tan on your own photo. Which one looks most natural on you?",
+    );
+  });
+
+  it("keeps an accurate reply, including ordinary words like light", () => {
+    const ok = "Here are Medium, Medium Tan and Tan. The tint gives light coverage.";
+    expect(checkShadeNames(ok, ui)).toBe(ok);
+  });
+
+  it("leaves replies alone when nothing was rendered", () => {
+    expect(checkShadeNames("Porcelain is a lovely shade.", [])).toBe("Porcelain is a lovely shade.");
   });
 });

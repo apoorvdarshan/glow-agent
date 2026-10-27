@@ -131,7 +131,7 @@ export async function runAgent({ report, history, cart }, deps) {
       throw err;
     }
     const calls = message.tool_calls ?? [];
-    if (calls.length === 0) return { reply: message.content?.trim() || "Done. What would you like to do next?", ui, cart: bag };
+    if (calls.length === 0) return { reply: checkShadeNames(message.content?.trim() || "Done. What would you like to do next?", ui), ui, cart: bag };
 
     messages.push({ role: "assistant", content: message.content ?? null, tool_calls: calls });
     for (const call of calls) {
@@ -226,6 +226,27 @@ async function runTool(name, args, ctx) {
     default:
       return { error: `Unknown tool ${name}` };
   }
+}
+
+// Shade names that are ordinary words ("light coverage", "rich texture") and
+// can't be told apart from prose, so they aren't checked.
+const COMMON_WORDS = new Set(["light", "medium", "deep", "rich", "tan"]);
+
+// Small models sometimes name shades they didn't render. If this turn rendered
+// try-ons and the reply names any other shade of those products, replace the
+// reply with an accurate one.
+export function checkShadeNames(reply, ui) {
+  const renders = ui.filter((e) => e.type === "tryon");
+  if (renders.length === 0) return reply;
+  const shown = new Set(renders.flatMap((e) => e.renders.map((r) => r.shadeName.toLowerCase())));
+  const others = renders
+    .flatMap((e) => getProduct(e.product.id).tryOn.shades.map((s) => s.name.toLowerCase()))
+    .filter((name) => !shown.has(name) && !COMMON_WORDS.has(name));
+  const text = reply.toLowerCase();
+  if (!others.some((name) => new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(text))) return reply;
+  const names = renders.flatMap((e) => e.renders.map((r) => r.shadeName));
+  const list = names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}` : names[0];
+  return `Here are ${list} on your own photo. Which one looks most natural on you?`;
 }
 
 // Keeps only valid lines from the browser's bag.
