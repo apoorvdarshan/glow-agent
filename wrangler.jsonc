@@ -19,12 +19,12 @@
   ],
   // Secrets (wrangler secret put): YOUCAM_API_KEY, PAYPAL_CLIENT_ID,
   // PAYPAL_CLIENT_SECRET, AI_API_KEY.
-  // The agent uses Gemini through its OpenAI-compatible endpoint.
+  // The agent uses Gemini (free tier) through its OpenAI-compatible endpoint.
   "vars": {
     "YOUCAM_BASE": "https://yce-api-01.makeupar.com",
     "PAYPAL_BASE": "https://api-m.sandbox.paypal.com",
     "AI_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai",
-    "AI_MODEL": "gemini-3.8-flash"
+    "AI_MODEL": "gemini-3.5-flash-lite"
   },
   "observability": { "enabled": true }
 }

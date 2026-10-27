@@ -20,7 +20,7 @@ Glow Agent replaces the guessing with measurement and a try-on, then carries you
 4. **An agent that can act.** Glow is an AI model with tools: `build_routine`, `search_products`, `show_products`, `try_on`, `add_to_bag` and `start_checkout`. It answers from your report, cites your scores, and shows results as cards rather than walls of text.
 5. **PayPal checkout.** The agent can fill the bag and open checkout, but it can't pay. You approve the payment yourself in PayPal (JS SDK v6). The server creates and captures the order with PayPal Orders v2, pricing every line from its own catalog, never from the browser.
 
-Without an AI key, the app still works end to end. The routine builder and shade matching run from buttons instead of chat. The live demo's agent runs on Gemini (`gemini-3.8-flash`) through Gemini's OpenAI-compatible endpoint.
+Without an AI key, the app still works end to end. The routine builder and shade matching run from buttons instead of chat. The live demo's agent runs on Gemini's free tier (`gemini-3.5-flash-lite`) through Gemini's OpenAI-compatible endpoint.
 
 ## How it uses YouCam
 
@@ -61,6 +61,8 @@ tests/             vitest unit tests
 - The sample face's analysis and try-ons are cached in KV, so demos spend nothing.
 - Reports and bags from the browser are rebuilt from known fields before they reach the model or PayPal.
 - Repeated identical tool calls within a turn are not re-run.
+- The agent runs on Gemini's free tier, so it can't run up a bill. If the free quota runs out, the suggestion buttons fall back to the built-in routine builder and shade try-on.
+- Glow declines requests unrelated to skin care or the shop.
 
 ## Run it locally
 

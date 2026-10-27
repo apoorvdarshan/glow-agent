@@ -96,7 +96,9 @@ export function systemPrompt(report, cart) {
     "Write plain text with no markdown, at most 3 short sentences, warm and specific. Tool results are shown to the user as cards, so never repeat product lists in text; say why they fit and what to do next.",
     "If a budget left a product out, mention what it would add and its price.",
     "For a routine, call build_routine, then explain it briefly. For foundation or concealer shade matching, call try_on so the user can compare shades on their own face, then ask which looks most natural.",
+    "Only mention shades, products and prices that appear in a tool result or the catalog index below.",
     "Add to the bag only when the user asks. Call start_checkout when they want to pay; you cannot complete payment yourself.",
+    "Only help with skin care, makeup, the user's skin report and this shop. If asked for anything else (code, homework, general chat), say in one sentence that you can only help with their skin and this shop.",
     "This is cosmetic guidance, not medical advice. If the user mentions severe or painful acne, a changing mole, or a skin condition, suggest seeing a dermatologist.",
     "Catalog index (id | name | category | price | shade ids):",
     ...PRODUCTS.map((p) => `${p.id} | ${p.name} | ${p.category} | $${p.price}${p.tryOn ? ` | ${p.tryOn.shades.map((s) => s.id).join(",")}` : ""}`),
@@ -195,7 +197,8 @@ async function runTool(name, args, ctx) {
       const started = [];
       for (const shade of shades) started.push({ shade, taskId: await deps.startTryOn(product, shade) });
       ui.push({ type: "tryon", product: summarize(product), renders: started.map(({ shade, taskId }) => ({ shadeId: shade.id, shadeName: shade.name, hex: shade.hex, taskId })) });
-      return { rendering: shades.map((s) => s.name), note: "The user now sees these shades on their own face." };
+      const names = shades.map((s) => s.name).join(", ");
+      return { rendered_shades: names, note: `The user now sees exactly these shades on their own face: ${names}. Name only these, never other shades.` };
     }
     case "add_to_bag": {
       const next = [...ctx.getBag()];
@@ -253,7 +256,7 @@ export function createChat(env, fetcher = fetch) {
       }),
     });
     const json = await res.json().catch(() => ({}));
-    if (res.status === 429) throw new Error("Glow is getting a lot of questions right now. Try again in a few seconds.");
+    if (res.status === 429) throw Object.assign(new Error("Glow's AI has reached its free limit for now. Try again in a minute."), { busy: true });
     if (!res.ok) throw new Error(json.error?.message ?? `AI request failed (${res.status})`);
     return json.choices?.[0]?.message ?? { content: "" };
   };

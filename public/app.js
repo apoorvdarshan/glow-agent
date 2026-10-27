@@ -26,7 +26,7 @@ async function api(path, { method = "GET", body, headers } = {}) {
     body: isJson ? JSON.stringify(body) : body,
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error ?? `Request failed (${res.status})`);
+  if (!res.ok) throw Object.assign(new Error(data.error ?? `Request failed (${res.status})`), { status: res.status, busy: Boolean(data.busy) });
   return data;
 }
 
@@ -320,12 +320,19 @@ function renderChips() {
   $("chips").replaceChildren(...chips.map((label) => el("button", { class: "chip", type: "button", text: label, onclick: () => onChip(label) })));
 }
 
+// Built-in versions of the suggestions, used without AI or when the AI is
+// busy or out of its free quota, so a suggestion never dead-ends.
+const LOCAL = {
+  "Build my routine": (o) => localRoutine(null, [], o),
+  "Keep it under $80": (o) => localRoutine(80, [], o),
+  "Match my foundation shade": (o) => localShadeMatch(o),
+  "Help my under-eyes": (o) => localRoutine(null, ["dark_circle_v2", "eye_bag"], o),
+};
+
 function onChip(label) {
   setTab("agent");
-  if (state.config.ai) return send(label);
-  if (label === "Build my routine") return localRoutine(null);
-  if (label === "Keep it under $80") return localRoutine(80);
-  if (label === "Match my foundation shade") return localShadeMatch();
+  if (state.config.ai) return send(label, { fallback: LOCAL[label] });
+  LOCAL[label]?.();
 }
 
 function append(node) {
@@ -353,7 +360,7 @@ function typing() {
   return append(el("div", { class: "msg bot typing", "aria-label": "Glow is typing" }, el("i"), el("i"), el("i")));
 }
 
-async function send(text) {
+async function send(text, { fallback } = {}) {
   text = text.trim();
   if (!text || state.busy || !state.report) return;
   if (!state.config.ai) {
@@ -378,8 +385,14 @@ async function send(text) {
     state.history.push({ role: "assistant", content: result.reply });
   } catch (err) {
     dots.remove();
-    botSay(err.message);
     state.history.pop();
+    if (fallback && (err.busy || err.status === 429)) {
+      state.busy = false;
+      $("composer-send").disabled = false;
+      botSay("Glow's AI is busy right now, so here's the built-in version.");
+      return fallback({ quiet: true });
+    }
+    botSay(err.message);
   } finally {
     state.busy = false;
     $("composer-send").disabled = false;
@@ -395,10 +408,10 @@ function renderUi(event) {
 }
 
 // Used when no AI model is configured.
-async function localRoutine(budget) {
-  userSay(budget ? `Build my routine, under $${budget}` : "Build my routine");
+async function localRoutine(budget, focus = [], { quiet = false } = {}) {
+  if (!quiet) userSay(budget ? `Build my routine, under $${budget}` : "Build my routine");
   try {
-    const { routine, products } = await api("/api/routine", { method: "POST", body: { report: state.report, budget } });
+    const { routine, products } = await api("/api/routine", { method: "POST", body: { report: state.report, budget, focus } });
     renderRoutine(routine, products);
     botSay(`Built from your scores: ${products.length} products, ${usd(routine.total)} in total.`);
   } catch (err) {
@@ -406,8 +419,8 @@ async function localRoutine(budget) {
   }
 }
 
-async function localShadeMatch() {
-  userSay("Match my foundation shade");
+async function localShadeMatch({ quiet = false } = {}) {
+  if (!quiet) userSay("Match my foundation shade");
   const tint = state.products.get("skin-tint");
   const mid = Math.floor(tint.shades.length / 2);
   // Same three the agent suggests by default (see shadeCandidates).

@@ -6,7 +6,7 @@ export const DEFAULT_LIMITS = {
   upload: { perIp: 10, global: 200 },
   analyze: { perIp: 3, global: 15 },
   tryon: { perIp: 15, global: 120 },
-  agent: { perIp: 60, global: 2000 },
+  agent: { perIp: 30, global: 300 },
 };
 
 export class LimitError extends Error {

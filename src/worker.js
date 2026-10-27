@@ -156,8 +156,9 @@ async function route(request, env, url) {
       return json(result);
     } catch (err) {
       if (err instanceof LimitError || err instanceof YouCamError) throw err;
+      if (err.busy) return json({ error: err.message, busy: true }, 503);
       console.error("agent", err);
-      throw new HttpError(err.message.startsWith("Glow is") ? err.message : "Glow couldn't answer just now. Please try again.", 502);
+      return json({ error: "Glow couldn't answer just now. Try again in a moment.", busy: true }, 502);
     }
   }
 
