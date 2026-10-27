@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Glow Agent</title>
+  <meta name="description" content="Snap a selfie, get a YouCam AI skin analysis, try makeup shades on your own face, and check out a routine built for your skin with PayPal.">
+  <meta name="theme-color" content="#FBF6F0">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Glow Agent home">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>Glow Agent</span>
+    </a>
+    <button class="bag-button" id="bag-open" type="button" aria-label="Open bag">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8Zm3 0V6a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      <span>Bag</span>
+      <span class="bag-count" id="bag-count" hidden>0</span>
+    </button>
+  </header>
+
+  <main>
+    <!-- Step 1: photo -->
+    <section class="intro" id="view-intro">
+      <div class="intro-copy">
+        <p class="eyebrow">AI skin analysis · virtual try-on · checkout</p>
+        <h1>Your skin, read in seconds.<br><em>Your routine, bought in one chat.</em></h1>
+        <p class="lede">Take a selfie. YouCam's skin AI scores 11 concerns, from pores to dark circles. Glow, your shopping agent, builds a routine around the results, lets you try shades on your own face, and checks out with PayPal.</p>
+        <div class="intro-actions">
+          <button class="btn primary" id="btn-camera" type="button">Take a selfie</button>
+          <label class="btn ghost" for="file-input">Upload a photo</label>
+          <input id="file-input" type="file" accept="image/jpeg,image/png" hidden>
+          <button class="btn link" id="btn-sample" type="button">Use the sample face</button>
+        </div>
+        <label class="consent">
+          <input type="checkbox" id="consent">
+          <span>I agree that my photo is sent to YouCam (Perfect Corp) for analysis. Glow Agent doesn't store it. Cosmetic guidance only, not medical advice.</span>
+        </label>
+        <p class="form-error" id="intro-error" role="alert" hidden></p>
+      </div>
+      <ul class="tips" aria-label="Photo tips">
+        <li><span>☀︎</span>Face a window or lamp so your face is evenly lit.</li>
+        <li><span>◎</span>Look straight at the camera, face filling most of the frame.</li>
+        <li><span>✕</span>Glasses off, hair back, no makeup if you can.</li>
+      </ul>
+    </section>
+
+    <!-- Step 2: analyzing -->
+    <section class="analyzing" id="view-analyzing" hidden>
+      <div class="scan">
+        <img id="scan-photo" alt="Your photo being analyzed">
+        <div class="scan-line" aria-hidden="true"></div>
+      </div>
+      <p class="scan-status" id="scan-status" aria-live="polite">Uploading your photo…</p>
+    </section>
+
+    <!-- Step 3: report + agent -->
+    <section class="workspace" id="view-workspace" hidden>
+      <aside class="report" aria-label="Skin report">
+        <div class="photo-stage">
+          <img id="report-photo" alt="Your analyzed photo">
+          <div id="report-mask" class="mask" aria-hidden="true" hidden></div>
+          <p class="mask-label" id="mask-label" hidden></p>
+        </div>
+        <div class="report-head">
+          <div class="ring" id="overall-ring" style="--value:0">
+            <span id="overall-score">–</span>
+            <small>skin score</small>
+          </div>
+          <dl class="facts">
+            <div><dt>Skin age</dt><dd id="skin-age">–</dd></div>
+            <div><dt>Skin type</dt><dd id="skin-type">–</dd></div>
+            <div><dt>T-zone / U-zone</dt><dd id="skin-zones">–</dd></div>
+          </dl>
+        </div>
+        <p class="hint">Tap a concern to see where YouCam found it.</p>
+        <ul class="concerns" id="concern-list"></ul>
+        <button class="btn ghost small" id="btn-restart" type="button">New photo</button>
+      </aside>
+
+      <section class="agent" aria-label="Shopping agent">
+        <div class="agent-head">
+          <span class="avatar" aria-hidden="true">G</span>
+          <div>
+            <h2>Glow</h2>
+            <p id="agent-sub">Your shopping agent</p>
+          </div>
+        </div>
+        <div class="thread" id="thread" aria-live="polite"></div>
+        <div class="chips" id="chips"></div>
+        <form class="composer" id="composer">
+          <input id="composer-input" type="text" autocomplete="off" placeholder="Ask Glow anything about your skin or products…" aria-label="Message Glow">
+          <button class="btn primary" type="submit" id="composer-send">Send</button>
+        </form>
+      </section>
+    </section>
+  </main>
+
+  <!-- Camera -->
+  <dialog class="camera" id="camera">
+    <div class="camera-frame">
+      <video id="camera-video" playsinline muted></video>
+      <div class="oval" aria-hidden="true"></div>
+    </div>
+    <p class="camera-tip">Fill the oval with your face, look straight ahead.</p>
+    <div class="camera-actions">
+      <button class="btn ghost" type="button" id="camera-cancel">Cancel</button>
+      <button class="btn primary" type="button" id="camera-shoot">Capture</button>
+    </div>
+  </dialog>
+
+  <!-- Bag -->
+  <aside class="drawer" id="bag" aria-label="Your bag" hidden>
+    <div class="drawer-head">
+      <h2>Your bag</h2>
+      <button class="icon-btn" type="button" id="bag-close" aria-label="Close bag">✕</button>
+    </div>
+    <ul class="bag-lines" id="bag-lines"></ul>
+    <div class="bag-empty" id="bag-empty">Your bag is empty. Ask Glow for a routine.</div>
+    <div class="bag-foot" id="bag-foot" hidden>
+      <div class="bag-total"><span>Total</span><strong id="bag-total">$0.00</strong></div>
+      <p class="fine">Free shipping. PayPal sandbox: no real money moves.</p>
+      <div id="paypal-container"></div>
+      <p class="form-error" id="pay-error" role="alert" hidden></p>
+    </div>
+    <div class="order-done" id="order-done" hidden></div>
+  </aside>
+  <div class="scrim" id="scrim" hidden></div>
+
+  <template id="tpl-product">
+    <article class="product">
+      <div class="product-art"></div>
+      <div class="product-body">
+        <h3></h3>
+        <p class="product-meta"></p>
+        <p class="product-blurb"></p>
+        <div class="swatches" hidden></div>
+        <div class="product-actions">
+          <span class="price"></span>
+          <button class="btn small try" type="button" hidden>Try on</button>
+          <button class="btn small primary add" type="button">Add</button>
+        </div>
+      </div>
+    </article>
+  </template>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# Copy to .dev.vars for `npm run dev`. Never commit .dev.vars.
+
+# YouCam API key (India-region accounts live on makeupar.com).
+YOUCAM_API_KEY=
+
+# PayPal sandbox app (developer.paypal.com > Apps & Credentials > Sandbox).
+PAYPAL_CLIENT_ID=
+PAYPAL_CLIENT_SECRET=
+
+# Any OpenAI-compatible chat completions API with tool calling
+# (OpenAI, Groq, Gemini's OpenAI endpoint, OpenRouter, ...).
+AI_API_KEY=
+AI_BASE_URL=
+AI_MODEL=
