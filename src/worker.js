@@ -58,6 +58,11 @@ async function route(request, env, url) {
 
   if (method === "GET" && pathname === "/api/products") return json(PRODUCTS.map(summarize));
 
+  // The cached sample report for the intro page; never starts a paid task.
+  if (method === "GET" && pathname === "/api/sample") {
+    return json({ report: (await env.GLOW_KV.get("sample:report", "json")) ?? null });
+  }
+
   if (method === "POST" && pathname === "/api/photo") {
     const type = request.headers.get("Content-Type") ?? "";
     if (!["image/jpeg", "image/png"].includes(type)) throw new HttpError("Send a JPEG or PNG photo.");

@@ -35,6 +35,13 @@ describe("worker routes", () => {
     expect(await res.json()).toEqual({ status: "success", report });
   });
 
+  it("serves the intro's sample report from cache without starting a task", async () => {
+    expect(await (await get("/api/sample")).json()).toEqual({ report: null });
+    const report = { overall: 92, concerns: [] };
+    const cached = env(memoryKv({ "sample:report": JSON.stringify(report) }));
+    expect(await (await get("/api/sample", cached)).json()).toEqual({ report });
+  });
+
   it("refuses the agent when no AI model is configured", async () => {
     const res = await worker.fetch(new Request("https://glow.test/api/agent", { method: "POST", body: "{}" }), env());
     expect(res.status).toBe(503);

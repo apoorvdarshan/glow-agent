@@ -4,129 +4,155 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Glow Agent</title>
-  <meta name="description" content="Snap a selfie, get a YouCam AI skin analysis, try makeup shades on your own face, and check out a routine built for your skin with PayPal.">
-  <meta name="theme-color" content="#FBF6F0">
+  <meta name="description" content="Take a selfie, see YouCam's AI map of your skin, try makeup shades on your own photo, and check out a routine built for your skin with PayPal.">
+  <meta name="theme-color" content="#ECEEF2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#141925" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
   <script type="module" src="/app.js"></script>
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="/" aria-label="Glow Agent home">
-      <span class="brand-mark" aria-hidden="true"></span>
-      <span>Glow Agent</span>
+  <a class="skip" href="#main">Skip to content</a>
+  <!-- YouCam's spot masks are faint (alpha ~30-60); this lifts their alpha so they read on any skin. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="boost" color-interpolation-filters="sRGB">
+      <feComponentTransfer><feFuncA type="linear" slope="4"/></feComponentTransfer>
+    </filter>
+  </svg>
+  <header class="bar">
+    <a class="wordmark" href="/" aria-label="Glow Agent, start over">
+      <span class="lens" aria-hidden="true"></span>
+      Glow Agent
     </a>
-    <button class="bag-button" id="bag-open" type="button" aria-label="Open bag">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8Zm3 0V6a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-      <span>Bag</span>
-      <span class="bag-count" id="bag-count" hidden>0</span>
+    <button class="bag-button" id="bag-open" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 8.5h13l-1.2 11.5H6.7L5.5 8.5Zm3.5 0V7a3 3 0 0 1 6 0v1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      Bag
+      <span class="count" id="bag-count" hidden>0</span>
     </button>
   </header>
 
-  <main>
-    <!-- Step 1: photo -->
-    <section class="intro" id="view-intro">
-      <div class="intro-copy">
-        <p class="eyebrow">AI skin analysis · virtual try-on · checkout</p>
-        <h1>Your skin, read in seconds.<br><em>Your routine, bought in one chat.</em></h1>
-        <p class="lede">Take a selfie. YouCam's skin AI scores 11 concerns, from pores to dark circles. Glow, your shopping agent, builds a routine around the results, lets you try shades on your own face, and checks out with PayPal.</p>
-        <div class="intro-actions">
-          <button class="btn primary" id="btn-camera" type="button">Take a selfie</button>
-          <label class="btn ghost" for="file-input">Upload a photo</label>
+  <main id="main">
+    <!-- Intro -->
+    <section class="intro" id="view-intro" aria-labelledby="intro-title">
+      <div class="intro-text">
+        <h1 id="intro-title">See what your skin needs. Buy only that.</h1>
+        <p class="lede">Take a selfie and YouCam's skin AI maps 11 concerns on your face, from pores to dark circles. Glow, your shopping agent, turns that map into a routine, shows makeup shades on your own photo, and checks out with PayPal.</p>
+        <div class="actions">
+          <button class="btn btn-ink" id="btn-camera" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5h3l1.6-2.5h6.8L17 8.5h3v10.5H4V8.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13.5" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+            Take a selfie
+          </button>
+          <label class="btn btn-line" for="file-input">Upload a photo</label>
           <input id="file-input" type="file" accept="image/jpeg,image/png" hidden>
-          <button class="btn link" id="btn-sample" type="button">Use the sample face</button>
         </div>
         <label class="consent">
           <input type="checkbox" id="consent">
-          <span>I agree that my photo is sent to YouCam (Perfect Corp) for analysis. Glow Agent doesn't store it. Cosmetic guidance only, not medical advice.</span>
+          <span>Send my photo to YouCam (Perfect Corp) for analysis. Glow Agent doesn't keep it. This is cosmetic guidance, not medical advice.</span>
         </label>
         <p class="form-error" id="intro-error" role="alert" hidden></p>
+        <ul class="tips">
+          <li>Face a window or a lamp</li>
+          <li>Look straight into the camera</li>
+          <li>Glasses off, hair back</li>
+        </ul>
       </div>
-      <ul class="tips" aria-label="Photo tips">
-        <li><span>☀︎</span>Face a window or lamp so your face is evenly lit.</li>
-        <li><span>◎</span>Look straight at the camera, face filling most of the frame.</li>
-        <li><span>✕</span>Glasses off, hair back, no makeup if you can.</li>
-      </ul>
+
+      <figure class="hero">
+        <button class="hero-map map" id="btn-sample" type="button" aria-describedby="hero-caption">
+          <img id="hero-photo" src="/api/sample/asset/image" alt="Sample face with YouCam's skin map">
+          <span class="layers" id="hero-layers" aria-hidden="true"></span>
+          <span class="hero-cta">Explore this sample</span>
+        </button>
+        <figcaption id="hero-caption">
+          <span class="hero-note">A real YouCam scan of the sample face. Each color marks where a concern was found.</span>
+          <ul class="hero-legend" id="hero-legend"></ul>
+        </figcaption>
+      </figure>
     </section>
 
-    <!-- Step 2: analyzing -->
+    <!-- Analyzing -->
     <section class="analyzing" id="view-analyzing" hidden>
-      <div class="scan">
+      <div class="map scan">
         <img id="scan-photo" alt="Your photo being analyzed">
-        <div class="scan-line" aria-hidden="true"></div>
+        <span class="sweep" aria-hidden="true"></span>
       </div>
-      <p class="scan-status" id="scan-status" aria-live="polite">Uploading your photo…</p>
+      <p class="scan-status" id="scan-status" aria-live="polite">Uploading your photo</p>
     </section>
 
-    <!-- Step 3: report + agent -->
-    <section class="workspace" id="view-workspace" hidden>
-      <aside class="report" aria-label="Skin report">
-        <div class="photo-stage">
-          <img id="report-photo" alt="Your analyzed photo">
-          <div id="report-mask" class="mask" aria-hidden="true" hidden></div>
-          <p class="mask-label" id="mask-label" hidden></p>
-        </div>
-        <div class="report-head">
-          <div class="ring" id="overall-ring" style="--value:0">
-            <span id="overall-score">–</span>
-            <small>skin score</small>
-          </div>
-          <dl class="facts">
-            <div><dt>Skin age</dt><dd id="skin-age">–</dd></div>
-            <div><dt>Skin type</dt><dd id="skin-type">–</dd></div>
-            <div><dt>T-zone / U-zone</dt><dd id="skin-zones">–</dd></div>
-          </dl>
-        </div>
-        <p class="hint">Tap a concern to see where YouCam found it.</p>
-        <ul class="concerns" id="concern-list"></ul>
-        <button class="btn ghost small" id="btn-restart" type="button">New photo</button>
-      </aside>
+    <!-- Workspace -->
+    <section class="workspace" id="view-workspace" data-tab="map" hidden>
+      <div class="tabs" role="tablist" aria-label="Workspace">
+        <button role="tab" id="tab-map" aria-controls="panel-map" aria-selected="true" type="button">Skin map</button>
+        <button role="tab" id="tab-agent" aria-controls="panel-agent" aria-selected="false" type="button">Glow<span class="dot" id="agent-dot" hidden></span></button>
+      </div>
 
-      <section class="agent" aria-label="Shopping agent">
-        <div class="agent-head">
-          <span class="avatar" aria-hidden="true">G</span>
+      <section class="panel mappanel" id="panel-map" role="tabpanel" aria-labelledby="tab-map">
+        <div class="map report-map">
+          <img id="report-photo" alt="Your analyzed photo">
+          <span class="layers" id="report-layers" aria-hidden="true"></span>
+        </div>
+        <dl class="summary">
+          <div><dt>Overall</dt><dd id="overall-score">–</dd></div>
+          <div><dt>Skin age</dt><dd id="skin-age">–</dd></div>
+          <div><dt>Skin type</dt><dd id="skin-type">–</dd></div>
+          <div><dt>T-zone and U-zone</dt><dd id="skin-zones">–</dd></div>
+        </dl>
+        <p class="legend-hint">Lowest scores first. Switch a concern on to map it on your face.</p>
+        <ul class="legend" id="concern-list"></ul>
+        <button class="btn btn-line btn-small" id="btn-restart" type="button">Analyze another photo</button>
+      </section>
+
+      <section class="panel agent" id="panel-agent" role="tabpanel" aria-labelledby="tab-agent">
+        <header class="agent-head">
+          <span class="lens lens-lg" aria-hidden="true"></span>
           <div>
             <h2>Glow</h2>
             <p id="agent-sub">Your shopping agent</p>
           </div>
-        </div>
+        </header>
         <div class="thread" id="thread" aria-live="polite"></div>
-        <div class="chips" id="chips"></div>
-        <form class="composer" id="composer">
-          <input id="composer-input" type="text" autocomplete="off" placeholder="Ask Glow anything about your skin or products…" aria-label="Message Glow">
-          <button class="btn primary" type="submit" id="composer-send">Send</button>
-        </form>
+        <div class="dock">
+          <div class="chips" id="chips"></div>
+          <form class="composer" id="composer">
+            <input id="composer-input" type="text" autocomplete="off" enterkeyhint="send" placeholder="Ask Glow anything" aria-label="Message Glow">
+            <button class="btn btn-ink" type="submit" id="composer-send" aria-label="Send">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5 18.5 12 13 17.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </form>
+        </div>
       </section>
     </section>
   </main>
 
   <!-- Camera -->
-  <dialog class="camera" id="camera">
+  <dialog class="camera" id="camera" aria-label="Take a selfie">
     <div class="camera-frame">
       <video id="camera-video" playsinline muted></video>
-      <div class="oval" aria-hidden="true"></div>
+      <span class="oval" aria-hidden="true"></span>
     </div>
-    <p class="camera-tip">Fill the oval with your face, look straight ahead.</p>
+    <p class="camera-tip">Fit your face inside the oval and look straight ahead.</p>
     <div class="camera-actions">
-      <button class="btn ghost" type="button" id="camera-cancel">Cancel</button>
-      <button class="btn primary" type="button" id="camera-shoot">Capture</button>
+      <button class="btn btn-line" type="button" id="camera-cancel">Cancel</button>
+      <button class="btn btn-ink" type="button" id="camera-shoot">Take photo</button>
     </div>
   </dialog>
 
   <!-- Bag -->
-  <aside class="drawer" id="bag" aria-label="Your bag" hidden>
-    <div class="drawer-head">
+  <aside class="bag" id="bag" aria-label="Your bag" hidden>
+    <div class="bag-head">
       <h2>Your bag</h2>
-      <button class="icon-btn" type="button" id="bag-close" aria-label="Close bag">✕</button>
+      <button class="icon-btn" type="button" id="bag-close" aria-label="Close bag">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
     </div>
     <ul class="bag-lines" id="bag-lines"></ul>
-    <div class="bag-empty" id="bag-empty">Your bag is empty. Ask Glow for a routine.</div>
+    <p class="bag-empty" id="bag-empty">Nothing here yet. Ask Glow for a routine and add it in one tap.</p>
     <div class="bag-foot" id="bag-foot" hidden>
       <div class="bag-total"><span>Total</span><strong id="bag-total">$0.00</strong></div>
-      <p class="fine">Free shipping. PayPal sandbox: no real money moves.</p>
+      <p class="fine">Free shipping. This is PayPal's sandbox, so no real money moves.</p>
       <div id="paypal-container"></div>
       <p class="form-error" id="pay-error" role="alert" hidden></p>
     </div>
@@ -141,11 +167,11 @@
         <h3></h3>
         <p class="product-meta"></p>
         <p class="product-blurb"></p>
-        <div class="swatches" hidden></div>
+        <div class="swatches" role="group" hidden></div>
         <div class="product-actions">
           <span class="price"></span>
-          <button class="btn small try" type="button" hidden>Try on</button>
-          <button class="btn small primary add" type="button">Add</button>
+          <button class="btn btn-line btn-small try" type="button" hidden>Try on</button>
+          <button class="btn btn-ink btn-small add" type="button">Add</button>
         </div>
       </div>
     </article>
